@@ -1,11 +1,14 @@
 """Const for API."""
 
+from enum import StrEnum
+
 CONTENT_TYPE_BINARY = "application/octet-stream"
 CONTENT_TYPE_JSON = "application/json"
 CONTENT_TYPE_PNG = "image/png"
 CONTENT_TYPE_TAR = "application/tar"
 CONTENT_TYPE_TEXT = "text/plain"
 CONTENT_TYPE_URL = "application/x-www-form-urlencoded"
+CONTENT_TYPE_X_LOG = "text/x-log"
 
 COOKIE_INGRESS = "ingress_session"
 
@@ -14,6 +17,8 @@ ATTR_APPARMOR_VERSION = "apparmor_version"
 ATTR_ATTRIBUTES = "attributes"
 ATTR_AVAILABLE_UPDATES = "available_updates"
 ATTR_BACKGROUND = "background"
+ATTR_BOOT_SLOT = "boot_slot"
+ATTR_BOOT_SLOTS = "boot_slots"
 ATTR_BOOT_TIMESTAMP = "boot_timestamp"
 ATTR_BOOTS = "boots"
 ATTR_BROADCAST_LLMNR = "broadcast_llmnr"
@@ -51,6 +56,7 @@ ATTR_REVISION = "revision"
 ATTR_SEAT = "seat"
 ATTR_SIGNED = "signed"
 ATTR_STARTUP_TIME = "startup_time"
+ATTR_STATUS = "status"
 ATTR_SUBSYSTEM = "subsystem"
 ATTR_SYSFS = "sysfs"
 ATTR_SYSTEM_HEALTH_LED = "system_health_led"
@@ -60,3 +66,10 @@ ATTR_USAGE = "usage"
 ATTR_USE_NTP = "use_ntp"
 ATTR_USERS = "users"
 ATTR_VENDOR = "vendor"
+
+
+class BootSlot(StrEnum):
+    """Boot slots used by HAOS."""
+
+    A = "A"
+    B = "B"
