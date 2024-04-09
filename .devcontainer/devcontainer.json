@@ -36,5 +36,11 @@
       }
     }
   },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:1": {
+        "version": "latest",
+        "moby": true
+    }
+  },
   "mounts": ["type=volume,target=/var/lib/docker"]
 }
