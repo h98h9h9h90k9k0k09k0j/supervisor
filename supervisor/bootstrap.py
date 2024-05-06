@@ -1,10 +1,13 @@
 """Bootstrap Supervisor."""
+
 import logging
 import os
 from pathlib import Path
 import signal
 
 from colorlog import ColoredFormatter
+
+from supervisor.pleovisors import PleovisorsAPI
 
 from .addons.manager import AddonManager
 from .api import RestAPI
@@ -57,6 +60,7 @@ async def initialize_coresys() -> CoreSys:
 
     # Initialize core objects
     coresys.docker = DockerAPI(coresys)
+    coresys.pleovisor = PleovisorsAPI(coresys)
     coresys.resolution = ResolutionManager(coresys)
     coresys.jobs = JobManager(coresys)
     coresys.core = Core(coresys)

@@ -1,4 +1,5 @@
 """Constants file for Supervisor."""
+
 from dataclasses import dataclass
 from enum import StrEnum
 from ipaddress import ip_network
@@ -34,7 +35,7 @@ FILE_SUFFIX_CONFIGURATION = [".yaml", ".yml", ".json"]
 
 MACHINE_ID = Path("/etc/machine-id")
 SOCKET_DBUS = Path("/run/dbus/system_bus_socket")
-SOCKET_DOCKER = Path("/run/docker.sock")
+SOCKET_DOCKER = Path("unix://run/docker.sock")
 RUN_SUPERVISOR_STATE = Path("/run/supervisor")
 SYSTEMD_JOURNAL_PERSISTENT = Path("/var/log/journal")
 SYSTEMD_JOURNAL_VOLATILE = Path("/run/log/journal")
@@ -258,6 +259,8 @@ ATTR_PANEL_TITLE = "panel_title"
 ATTR_PANELS = "panels"
 ATTR_PARENT = "parent"
 ATTR_PASSWORD = "password"
+ATTR_PLEOVISOR = "pleovisor"
+ATTR_PLEOVISORS = "pleovisors"
 ATTR_PLUGINS = "plugins"
 ATTR_PORT = "port"
 ATTR_PORTS = "ports"

@@ -1,4 +1,5 @@
 """Handle core shared data."""
+
 from __future__ import annotations
 
 import asyncio
@@ -12,6 +13,8 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, TypeVar
 
 import aiohttp
+
+from supervisor.pleovisors import PleovisorsAPI
 
 from .config import CoreConfig
 from .const import ENV_SUPERVISOR_DEV, SERVER_SOFTWARE
@@ -69,6 +72,7 @@ class CoreSys:
 
         # Internal objects pointers
         self._docker: DockerAPI | None = None
+        self._pleovisor: PleovisorsAPI | None = None
         self._core: Core | None = None
         self._arch: CpuArch | None = None
         self._auth: Auth | None = None
@@ -145,6 +149,20 @@ class CoreSys:
         if self._docker:
             raise RuntimeError("Docker already set!")
         self._docker = value
+
+    @property
+    def pleovisor(self) -> PleovisorsAPI:
+        """Return PleovisorAPI object."""
+        if self._pleovisor is None:
+            raise RuntimeError("Pleovisor not set!")
+        return self._pleovisor
+
+    @pleovisor.setter
+    def pleovisor(self, value: PleovisorsAPI) -> None:
+        """Set PleovisorAPI object."""
+        if self._pleovisor:
+            raise RuntimeError("Pleovisor already set!")
+        self._pleovisor = value
 
     @property
     def scheduler(self) -> Scheduler:
@@ -623,6 +641,11 @@ class CoreSysAttributes:
     def sys_docker(self) -> DockerAPI:
         """Return DockerAPI object."""
         return self.coresys.docker
+
+    @property
+    def sys_pleovisors(self) -> PleovisorsAPI:
+        """Return PleovisorAPI object."""
+        return self.coresys.pleovisor
 
     @property
     def sys_scheduler(self) -> Scheduler:
