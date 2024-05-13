@@ -1,4 +1,5 @@
 """Handle security part of this API."""
+
 import logging
 import re
 from typing import Final
@@ -119,6 +120,7 @@ ADDONS_ROLE_ACCESS: dict[str, re.Pattern] = {
         r"|/network/.+"
         r"|/observer/.+"
         r"|/os/(?!datadisk/wipe).+"
+        r"|/pleovisors.*"
         r"|/refresh_updates"
         r"|/resolution/.+"
         r"|/security/.+"

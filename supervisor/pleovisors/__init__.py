@@ -25,25 +25,30 @@ class PleovisorsAPI(CoreSysAttributes, FileConfiguration):
         """Initialize Pleovisor API object."""
         self.coresys: CoreSys = coresys
         super().__init__(FILE_HASSIO_PLEOVISORS, SCHEMA_PLEOVISORS_FILE)
-        self._instances: list[Pleovisor] = {
-            Pleovisor.try_from_dict(coresys, pleovisor_data)
-            for pleovisor_data in self._data[ATTR_PLEOVISORS]
-        }
+        self._instances: dict[Pleovisor] = {}
+        for url in self._data[ATTR_PLEOVISORS]:
+            self._instances[url] = Pleovisor(
+                coresys, url, self._data[ATTR_PLEOVISORS][url]
+            )
 
     @property
     def instances(self) -> list[Pleovisor]:
         """Return list of all Pleovisor instances."""
-        return self._instances
+        return list(self._instances.values())
 
-    def get_instance(self, url: str):
+    def get_instance(self, url: str) -> Pleovisor:
         """Get the first Pleovisor instance matching the url."""
-        return next(
-            (instance for instance in self.instances if instance.url == url), None
-        )
+        instance = self._instances.get(url, None)
+        if instance is None:
+            raise DockerError(
+                "Couldnt find Pleovisor {url} in list of instances!",
+                logger=_LOGGER.error,
+            )
+        return instance
 
-    def instance_exists(self, url: str):
+    def instance_exists(self, url: str) -> bool:
         """Check whether a Pleovisor instance matching the url exists."""
-        return self.get_instance(url) is not None
+        return self._instances.get(url, None) is not None
 
     @Job(
         name="pleovisor_add_instance",
@@ -63,25 +68,21 @@ class PleovisorsAPI(CoreSysAttributes, FileConfiguration):
         pleovisor = Pleovisor(self.coresys, url)
 
         # Add Pleovisor to list
-        self.instances.append(pleovisor)
+        self._instances[url] = pleovisor
 
-        self._data[ATTR_PLEOVISORS].append(pleovisor.to_dict)
+        self._data[ATTR_PLEOVISORS][pleovisor.url] = pleovisor.addons
         self.save_data()
 
     async def remove_pleovisor(self, url: str, force_remove=False):
         """Remove a Pleovisor."""
         if url == SOCKET_DOCKER:
             raise DockerError("Can't remove Supervisors Docker!", logger=_LOGGER.error)
+
         pleovisor = self.get_instance(url)
-        if pleovisor is None:
-            raise DockerError(
-                "Couldnt find Pleovisor {url} in list of instances!",
-                logger=_LOGGER.error,
-            )
 
         pleovisor.remove(force_remove)
-        self.instances.remove(pleovisor)
-        self._data[ATTR_PLEOVISORS].remove(pleovisor.to_dict)
+        del self._instances[url]
+        del self._data[ATTR_PLEOVISORS][url]
         self.save_data()
 
     async def add_addon(self, pleovisor: Pleovisor, addon: AddonStore):

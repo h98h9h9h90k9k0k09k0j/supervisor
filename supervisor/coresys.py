@@ -14,8 +14,6 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 import aiohttp
 
-from supervisor.pleovisors import PleovisorsAPI
-
 from .config import CoreConfig
 from .const import ENV_SUPERVISOR_DEV, SERVER_SOFTWARE
 from .utils.dt import UTC, get_time_zone
@@ -40,6 +38,7 @@ if TYPE_CHECKING:
     from .misc.tasks import Tasks
     from .mounts.manager import MountManager
     from .os.manager import OSManager
+    from .pleovisors import PleovisorsAPI
     from .plugins.manager import PluginManager
     from .resolution.module import ResolutionManager
     from .security.module import Security

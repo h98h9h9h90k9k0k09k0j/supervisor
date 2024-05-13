@@ -4,7 +4,7 @@ import voluptuous as vol
 
 from supervisor.addons.validate import RE_SLUG_FIELD
 
-from ..const import ATTR_ADDONS, ATTR_PLEOVISORS, ATTR_URL
+from ..const import ATTR_PLEOVISORS
 
 
 def validate_pleovisor(pleovisor: str) -> str:
@@ -17,17 +17,11 @@ def validate_pleovisor(pleovisor: str) -> str:
 
 
 # pylint: disable=no-value-for-parameter
-SCHEMA_PLEOVISOR = vol.Schema(
-    {
-        vol.Required(ATTR_URL): vol.Url(),
-        vol.Optional(ATTR_ADDONS, default=list): [vol.Match(RE_SLUG_FIELD)],
-    },
-    extra=vol.REMOVE_EXTRA,
-)
-
 SCHEMA_PLEOVISORS_FILE = vol.Schema(
     {
-        vol.Optional(ATTR_PLEOVISORS, default=list): [SCHEMA_PLEOVISOR],
+        vol.Optional(ATTR_PLEOVISORS, default=dict): {
+            vol.Url(): [vol.All(str, vol.Match(RE_SLUG_FIELD))]
+        },
     },
     extra=vol.REMOVE_EXTRA,
 )

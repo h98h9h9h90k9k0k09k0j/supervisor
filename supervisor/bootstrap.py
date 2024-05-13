@@ -7,8 +7,6 @@ import signal
 
 from colorlog import ColoredFormatter
 
-from supervisor.pleovisors import PleovisorsAPI
-
 from .addons.manager import AddonManager
 from .api import RestAPI
 from .arch import CpuArch
@@ -41,6 +39,7 @@ from .misc.scheduler import Scheduler
 from .misc.tasks import Tasks
 from .mounts.manager import MountManager
 from .os.manager import OSManager
+from .pleovisors import PleovisorsAPI
 from .plugins.manager import PluginManager
 from .resolution.module import ResolutionManager
 from .security.module import Security

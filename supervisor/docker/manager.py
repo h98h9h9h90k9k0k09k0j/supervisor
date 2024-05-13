@@ -103,7 +103,7 @@ class DockerAPI:
     This class is not AsyncIO safe!
     """
 
-    def __init__(self, coresys: CoreSys, url: str = SOCKET_DOCKER):
+    def __init__(self, coresys: CoreSys, url: str = f"unix:/{str(SOCKET_DOCKER)}"):
         """Initialize Docker base wrapper."""
         self.docker: DockerClient = DockerClient(
             base_url=url, version="auto", timeout=900

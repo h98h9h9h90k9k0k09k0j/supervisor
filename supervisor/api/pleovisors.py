@@ -13,7 +13,7 @@ from supervisor.exceptions import APIError, DockerError
 from supervisor.pleovisors.instance import Pleovisor
 from supervisor.pleovisors.validate import validate_pleovisor
 
-from ..const import ATTR_ADDONS, ATTR_PLEOVISOR, ATTR_URL
+from ..const import ATTR_ADDONS, ATTR_PLEOVISOR, ATTR_PLEOVISORS, ATTR_URL
 from ..coresys import CoreSysAttributes
 from .utils import api_process, api_validate
 
@@ -30,21 +30,24 @@ class APIPleovisors(CoreSysAttributes):
     def _extract_pleovisor(self, request: web.Request) -> Pleovisor:
         """Return repository, throw an exception it it doesn't exist."""
         pleovisor_url: str = request.match_info.get("pleovisor")
-        pleovisor = self.sys_pleovisors.get(pleovisor_url)
-        if not pleovisor:
-            raise APIError(f"Pleovisor {pleovisor_url} does not exist")
+        try:
+            pleovisor = self.sys_pleovisors.get_instance(pleovisor_url)
+        except DockerError:
+            raise APIError(f"Pleovisor {pleovisor_url} does not exist") from DockerError
+        return pleovisor
 
     def _generate_pleovisor_information(self, pleovisor: Pleovisor) -> dict[str, Any]:
         """Generate repository information."""
         return {ATTR_URL: pleovisor.url, ATTR_ADDONS: pleovisor.addons}
 
     @api_process
-    async def pleovisor_list(self, request: web.Request) -> list[dict[str, Any]]:
+    async def pleovisor_list(self, request: web.Request) -> dict[str, Any]:
         """Return all pleovisors."""
-        return [
-            self._generate_pleovisor_information(pleovisor)
-            for pleovisor in self.sys_pleovisors.all_pleovisors
-        ]
+        return {
+            ATTR_PLEOVISORS: [
+                pleovisor.to_dict() for pleovisor in self.sys_pleovisors.instances
+            ]
+        }
 
     @api_process
     async def pleovisor_info(self, request: web.Request) -> dict[str, Any]:
@@ -61,8 +64,8 @@ class APIPleovisors(CoreSysAttributes):
     @api_process
     async def remove_pleovisor(self, request: web.Request):
         """Remove Pleovisor."""
-        pleovisor: Pleovisor = self._extract_pleovisor(request)
-        await asyncio.shield(self.sys_pleovisors.remove_pleovisor(pleovisor))
+        pleovisor_url: str = request.match_info.get("pleovisor")
+        await asyncio.shield(self.sys_pleovisors.remove_pleovisor(pleovisor_url))
 
     @api_process
     async def add_addon(self, request: web.Request):

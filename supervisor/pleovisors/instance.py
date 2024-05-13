@@ -15,25 +15,24 @@ _LOGGER: logging.Logger = logging.getLogger(__name__)
 class Pleovisor:
     """Pleovisor Instance."""
 
-    def __init__(self, coresys: CoreSys, url: str, addons: list[str] = list[str]):
+    def __init__(self, coresys: CoreSys, url: str, addons: list | None = None):
         """Initialize Docker base wrapper."""
         self.docker = DockerAPI(coresys, url)
-        self._url = url
+        self._url: str = url
         self.coresys = coresys
-        self.addons = addons
+        self.addons: list = addons or []
 
-    def to_dict(self) -> dict[str, str | None]:
+    def to_dict(self) -> dict[str, any]:
         """Get dictionary representation."""
         return {
-            ATTR_URL: self.url,
-            ATTR_ADDONS: self.addons,
+            self.url: self.addons,
         }
 
     @classmethod
-    def try_from_dict(cls, coresys, data: dict[str, str | None]) -> Self | None:
+    def try_from_dict(cls, coresys, data: dict[str, any]) -> Self | None:
         """Return object from dictionary representation."""
         try:
-            return cls(coresys, url=data[ATTR_URL], addons=data.get(ATTR_ADDONS))
+            return cls(coresys, url=data.keys[0], addons=data.items[0])
         except DockerError:
             return None
 
@@ -72,14 +71,13 @@ class Pleovisor:
 
     def remove(self, force_remove: bool = False):
         """Call to remove Pleovisor."""
-        if self.addons.count > 0:
+        if len(self.addons) > 0:
             if not force_remove:
                 raise DockerError(
                     "Couldnt remove Pleovisor {url}, because it still has addons!",
                     logger=_LOGGER.error,
                 )
-            else:
-                for addon in self.addons:
-                    self.remove_addon(addon)
+            for addon in self.addons:
+                self.remove_addon(addon)
 
         self.docker.docker.close()
