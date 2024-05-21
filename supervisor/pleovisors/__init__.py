@@ -2,12 +2,12 @@
 
 import logging
 
+from supervisor.addons.addon import Addon
 from supervisor.jobs.const import JobCondition
 from supervisor.jobs.decorator import Job
 from supervisor.pleovisors.const import FILE_HASSIO_PLEOVISORS
 from supervisor.pleovisors.instance import Pleovisor
 from supervisor.pleovisors.validate import SCHEMA_PLEOVISORS_FILE
-from supervisor.store.addon import AddonStore
 
 from ..const import ATTR_PLEOVISORS, SOCKET_DOCKER
 from ..coresys import CoreSys, CoreSysAttributes
@@ -26,9 +26,13 @@ class PleovisorsAPI(CoreSysAttributes, FileConfiguration):
         self.coresys: CoreSys = coresys
         super().__init__(FILE_HASSIO_PLEOVISORS, SCHEMA_PLEOVISORS_FILE)
         self._instances: dict[Pleovisor] = {}
+
+    async def load(self):
+        """Load PleovisorsAPI."""
+        _LOGGER.log(logging.ERROR, self._data[ATTR_PLEOVISORS])
         for url in self._data[ATTR_PLEOVISORS]:
             self._instances[url] = Pleovisor(
-                coresys, url, self._data[ATTR_PLEOVISORS][url]
+                self.coresys, url, self._data[ATTR_PLEOVISORS][url]
             )
 
     @property
@@ -70,7 +74,7 @@ class PleovisorsAPI(CoreSysAttributes, FileConfiguration):
         # Add Pleovisor to list
         self._instances[url] = pleovisor
 
-        self._data[ATTR_PLEOVISORS][pleovisor.url] = pleovisor.addons
+        self._data[ATTR_PLEOVISORS][pleovisor.url] = []
         self.save_data()
 
     async def remove_pleovisor(self, url: str, force_remove=False):
@@ -85,11 +89,22 @@ class PleovisorsAPI(CoreSysAttributes, FileConfiguration):
         del self._data[ATTR_PLEOVISORS][url]
         self.save_data()
 
-    async def add_addon(self, pleovisor: Pleovisor, addon: AddonStore):
+    async def add_addon(self, pleovisor: Pleovisor | None, addon: Addon):
         """Add store addon to Pleovisor."""
-        image = addon.image
-        for pleovisor in self.instances:
-            if image in pleovisor.addons:
-                pleovisor.remove_addon(image)
 
-        pleovisor.add_addon(addon.image)
+        if pleovisor is not None:
+            await pleovisor.add_addon(addon)
+            self._data[ATTR_PLEOVISORS][pleovisor.url] = pleovisor.addons_str()
+            # Remove addon from other pleovisor without moving to supervisor
+            for pleovisor in self.instances:
+                if addon in pleovisor.addons:
+                    pleovisor.addons.remove(addon)
+                    self._data[ATTR_PLEOVISORS][pleovisor.url] = pleovisor.addons_str()
+        else:
+            # Remove addon from other pleovisor and move back to supervisor
+            for pleovisor in self.instances:
+                if addon in pleovisor.addons:
+                    pleovisor.remove_addon(addon)
+                    self._data[ATTR_PLEOVISORS][pleovisor.url] = pleovisor.addons_str()
+
+        self.save_data()

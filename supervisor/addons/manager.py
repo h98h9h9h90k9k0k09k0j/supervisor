@@ -1,4 +1,5 @@
 """Supervisor add-on manager."""
+
 import asyncio
 from collections.abc import Awaitable
 from contextlib import suppress
@@ -86,6 +87,9 @@ class AddonManager(CoreSysAttributes):
         for slug in self.data.system:
             addon = self.local[slug] = Addon(self.coresys, slug)
             tasks.append(addon.load())
+
+        # Load Pleovisors
+        await self.coresys.pleovisor.load()
 
         # Run initial tasks
         _LOGGER.info("Found %d installed add-ons", len(self.data.system))

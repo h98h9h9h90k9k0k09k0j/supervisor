@@ -1,4 +1,5 @@
 """Init file for Supervisor add-on Docker object."""
+
 from __future__ import annotations
 
 from collections.abc import Awaitable
@@ -13,6 +14,8 @@ from awesomeversion import AwesomeVersion
 import docker
 from docker.types import Mount
 import requests
+
+from supervisor.docker.manager import DockerAPI
 
 from ..addons.build import AddonBuild
 from ..addons.const import MappingType
@@ -67,10 +70,12 @@ NO_ADDDRESS = ip_address("0.0.0.0")
 class DockerAddon(DockerInterface):
     """Docker Supervisor wrapper for Home Assistant."""
 
-    def __init__(self, coresys: CoreSys, addon: Addon):
+    def __init__(
+        self, coresys: CoreSys, addon: Addon, dockerAPI: DockerAPI | None = None
+    ):
         """Initialize Docker Home Assistant wrapper."""
         self.addon: Addon = addon
-        super().__init__(coresys)
+        super().__init__(coresys, dockerAPI)
 
         self._hw_listener: EventListener | None = None
 
@@ -88,7 +93,7 @@ class DockerAddon(DockerInterface):
     def ip_address(self) -> IPv4Address:
         """Return IP address of this container."""
         if self.addon.host_network:
-            return self.sys_docker.network.gateway
+            return self.docker.network.gateway
 
         # Extract IP-Address
         try:
@@ -247,8 +252,8 @@ class DockerAddon(DockerInterface):
     def network_mapping(self) -> dict[str, IPv4Address]:
         """Return hosts mapping."""
         return {
-            "supervisor": self.sys_docker.network.supervisor,
-            "hassio": self.sys_docker.network.supervisor,
+            "supervisor": self.docker.network.supervisor,
+            "hassio": self.docker.network.supervisor,
         }
 
     @property
@@ -311,7 +316,7 @@ class DockerAddon(DockerInterface):
     @property
     def cpu_rt_runtime(self) -> int | None:
         """Limit CPU real-time runtime in microseconds."""
-        if not self.sys_docker.info.support_cpu_realtime:
+        if not self.docker.info.support_cpu_realtime:
             return None
 
         # If need CPU RT
@@ -579,7 +584,10 @@ class DockerAddon(DockerInterface):
             raise
 
         _LOGGER.info(
-            "Starting Docker add-on %s with version %s", self.image, self.version
+            "Starting Docker add-on %s with version %s in %s",
+            self.image,
+            self.version,
+            self.docker.url,
         )
 
         # Write data to DNS server
@@ -655,7 +663,7 @@ class DockerAddon(DockerInterface):
         _LOGGER.info("Starting build for %s:%s", self.image, version)
         try:
             image, log = await self.sys_run_in_executor(
-                self.sys_docker.images.build,
+                self.docker.images.build,
                 use_config_proxy=False,
                 **build_env.get_docker_args(version, image),
             )
@@ -688,7 +696,7 @@ class DockerAddon(DockerInterface):
     def export_image(self, tar_file: Path) -> Awaitable[None]:
         """Export current images into a tar file."""
         return self.sys_run_in_executor(
-            self.sys_docker.export_image, self.image, self.version, tar_file
+            self.docker.export_image, self.image, self.version, tar_file
         )
 
     @Job(
@@ -699,7 +707,7 @@ class DockerAddon(DockerInterface):
     async def import_image(self, tar_file: Path) -> None:
         """Import a tar file as image."""
         docker_image = await self.sys_run_in_executor(
-            self.sys_docker.import_image, tar_file
+            self.docker.import_image, tar_file
         )
         if docker_image:
             self._meta = docker_image.attrs
@@ -727,7 +735,7 @@ class DockerAddon(DockerInterface):
         """
         try:
             # Load needed docker objects
-            container = self.sys_docker.containers.get(self.name)
+            container = self.docker.containers.get(self.name)
             socket = container.attach_socket(params={"stdin": 1, "stream": 1})
         except (docker.errors.DockerException, requests.RequestException) as err:
             _LOGGER.error("Can't attach to %s stdin: %s", self.name, err)
@@ -790,7 +798,7 @@ class DockerAddon(DockerInterface):
 
         try:
             docker_container = await self.sys_run_in_executor(
-                self.sys_docker.containers.get, self.name
+                self.docker.containers.get, self.name
             )
         except docker.errors.NotFound:
             self.sys_bus.remove_listener(self._hw_listener)

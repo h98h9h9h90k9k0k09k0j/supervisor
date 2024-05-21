@@ -8,12 +8,11 @@ from aiohttp import web
 import voluptuous as vol
 
 from supervisor.addons.addon import Addon
-from supervisor.addons.manager import AnyAddon
-from supervisor.exceptions import APIError, DockerError
+from supervisor.exceptions import APIAddonNotInstalled, APIError, DockerError
 from supervisor.pleovisors.instance import Pleovisor
 from supervisor.pleovisors.validate import validate_pleovisor
 
-from ..const import ATTR_ADDONS, ATTR_PLEOVISOR, ATTR_PLEOVISORS, ATTR_URL
+from ..const import ATTR_PLEOVISOR, ATTR_PLEOVISORS, REQUEST_FROM
 from ..coresys import CoreSysAttributes
 from .utils import api_process, api_validate
 
@@ -27,18 +26,35 @@ SCHEMA_ADD_PLEOVISOR = vol.Schema(
 class APIPleovisors(CoreSysAttributes):
     """Handle REST API for pleovisor."""
 
-    def _extract_pleovisor(self, request: web.Request) -> Pleovisor:
+    def _extract_pleovisor(self, request: web.Request) -> Pleovisor | None:
         """Return repository, throw an exception it it doesn't exist."""
         pleovisor_url: str = request.match_info.get("pleovisor")
+        if pleovisor_url == "supervisor":
+            return None
         try:
             pleovisor = self.sys_pleovisors.get_instance(pleovisor_url)
         except DockerError:
             raise APIError(f"Pleovisor {pleovisor_url} does not exist") from DockerError
         return pleovisor
 
-    def _generate_pleovisor_information(self, pleovisor: Pleovisor) -> dict[str, Any]:
-        """Generate repository information."""
-        return {ATTR_URL: pleovisor.url, ATTR_ADDONS: pleovisor.addons}
+    def get_addon_for_request(self, request: web.Request) -> Addon:
+        """Return addon, throw an exception if it doesn't exist."""
+        addon_slug: str = request.match_info.get("addon")
+
+        # Lookup itself
+        if addon_slug == "self":
+            addon = request.get(REQUEST_FROM)
+            if not isinstance(addon, Addon):
+                raise APIError("Self is not an Addon")
+            return addon
+
+        addon = self.sys_addons.get(addon_slug)
+        if not addon:
+            raise APIError(f"Addon {addon_slug} does not exist")
+        if not isinstance(addon, Addon) or not addon.is_installed:
+            raise APIAddonNotInstalled("Addon is not installed")
+
+        return addon
 
     @api_process
     async def pleovisor_list(self, request: web.Request) -> dict[str, Any]:
@@ -52,8 +68,10 @@ class APIPleovisors(CoreSysAttributes):
     @api_process
     async def pleovisor_info(self, request: web.Request) -> dict[str, Any]:
         """Return Pleovisor information."""
-        pleovisor: Pleovisor = self._extract_pleovisor(request)
-        return self._generate_pleovisor_information(pleovisor)
+        pleovisor: Pleovisor | None = self._extract_pleovisor(request)
+        if pleovisor is None:
+            raise APIError("Supervisor is not a Pleovisor.")
+        return pleovisor.to_dict()
 
     @api_process
     async def add_pleovisor(self, request: web.Request):
@@ -70,12 +88,7 @@ class APIPleovisors(CoreSysAttributes):
     @api_process
     async def add_addon(self, request: web.Request):
         """Add Pleovisor."""
-        addon_slug: str = request.match_info.get("addon")
-        addon: AnyAddon | None = self.coresys.addons.get(addon_slug)
-        if addon is None:
-            raise APIError("Couldn't find addon {addon_slug}")
-        if addon is Addon:  # Opposed to AddonStore
-            raise DockerError("Addon {addon_slug} is a Core addon")
+        addon: Addon = self.get_addon_for_request(request)
         pleovisor: Pleovisor = self._extract_pleovisor(request)
 
         await asyncio.shield(self.sys_pleovisors.add_addon(pleovisor, addon))

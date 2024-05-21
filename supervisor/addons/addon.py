@@ -1,4 +1,5 @@
 """Init file for Supervisor add-ons."""
+
 import asyncio
 from collections.abc import Awaitable
 from contextlib import suppress
@@ -22,6 +23,7 @@ from securetar import atomic_contents_add, secure_path
 import voluptuous as vol
 from voluptuous.humanize import humanize_error
 
+from supervisor.docker.manager import DockerAPI
 from supervisor.utils.dt import utc_from_timestamp
 
 from ..bus import EventListener
@@ -144,6 +146,30 @@ class Addon(AddonModel):
     def __repr__(self) -> str:
         """Return internal representation."""
         return f"<Addon: {self.slug}>"
+
+    @Job(
+        name="addon_move",
+        limit=JobExecutionLimit.GROUP_ONCE,
+        on_condition=AddonsJobError,
+    )
+    async def move(self, docker: DockerAPI | None) -> asyncio.Task | None:
+        """Move this addon to other Docker location.
+
+        Returns a Task that completes when addon has state 'started' (see start)
+        if it was running. Else nothing is returned.
+        """
+
+        # Stop the addon if running
+        if self.state in {AddonState.STARTED, AddonState.STARTUP}:
+            await self.stop()
+
+        if docker is None:
+            docker = self.sys_docker
+        _LOGGER.log("hello %s", docker)
+
+        self.instance = DockerAddon(self.coresys, self, docker)
+        await self.install()
+        return await self.start()
 
     @property
     def state(self) -> AddonState:

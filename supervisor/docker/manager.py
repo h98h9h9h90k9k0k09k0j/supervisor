@@ -108,6 +108,7 @@ class DockerAPI:
         self.docker: DockerClient = DockerClient(
             base_url=url, version="auto", timeout=900
         )
+        self.url = url
         self.network: DockerNetwork = DockerNetwork(self.docker)
         self._info: DockerInfo = DockerInfo.new(self.docker.info())
         self.config: DockerConfig = DockerConfig()
