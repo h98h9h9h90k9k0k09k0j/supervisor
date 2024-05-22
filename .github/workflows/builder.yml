@@ -167,7 +167,8 @@ jobs:
             --${{ matrix.arch }} \
             --target /data \
             --cosign \
-            --generic ${{ needs.init.outputs.version }}
+            --generic ${{ needs.init.outputs.version }} \
+            --docker-hub ${{ github.repository_owner }}
         env:
           CAS_API_KEY: ${{ secrets.CAS_TOKEN }}
 
