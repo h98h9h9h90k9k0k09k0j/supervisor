@@ -96,10 +96,12 @@ class PleovisorsAPI(CoreSysAttributes, FileConfiguration):
             await pleovisor.add_addon(addon)
             self._data[ATTR_PLEOVISORS][pleovisor.url] = pleovisor.addons_str()
             # Remove addon from other pleovisor without moving to supervisor
-            for pleovisor in self.instances:
-                if addon in pleovisor.addons:
-                    pleovisor.addons.remove(addon)
-                    self._data[ATTR_PLEOVISORS][pleovisor.url] = pleovisor.addons_str()
+            for pleo_instance in self.instances:
+                if addon in pleo_instance.addons:
+                    pleo_instance.addons.remove(addon)
+                    self._data[ATTR_PLEOVISORS][
+                        pleo_instance.url
+                    ] = pleo_instance.addons_str()
         else:
             # Remove addon from other pleovisor and move back to supervisor
             for pleovisor in self.instances:
