@@ -112,7 +112,7 @@ class DockerAPI:
         self.network: DockerNetwork = DockerNetwork(self.docker)
         self._info: DockerInfo = DockerInfo.new(self.docker.info())
         self.config: DockerConfig = DockerConfig()
-        self._monitor: DockerMonitor = DockerMonitor(coresys)
+        self._monitor: DockerMonitor = DockerMonitor(coresys, self)
 
     @property
     def images(self) -> ImageCollection:

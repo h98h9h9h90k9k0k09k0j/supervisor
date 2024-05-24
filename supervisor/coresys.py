@@ -71,7 +71,7 @@ class CoreSys:
 
         # Internal objects pointers
         self._docker: DockerAPI | None = None
-        self._pleovisor: PleovisorsAPI | None = None
+        self._pleovisors: PleovisorsAPI | None = None
         self._core: Core | None = None
         self._arch: CpuArch | None = None
         self._auth: Auth | None = None
@@ -150,18 +150,18 @@ class CoreSys:
         self._docker = value
 
     @property
-    def pleovisor(self) -> PleovisorsAPI:
+    def pleovisors(self) -> PleovisorsAPI:
         """Return PleovisorAPI object."""
-        if self._pleovisor is None:
-            raise RuntimeError("Pleovisor not set!")
-        return self._pleovisor
+        if self._pleovisors is None:
+            raise RuntimeError("Pleovisors not set!")
+        return self._pleovisors
 
-    @pleovisor.setter
-    def pleovisor(self, value: PleovisorsAPI) -> None:
+    @pleovisors.setter
+    def pleovisors(self, value: PleovisorsAPI) -> None:
         """Set PleovisorAPI object."""
-        if self._pleovisor:
-            raise RuntimeError("Pleovisor already set!")
-        self._pleovisor = value
+        if self._pleovisors:
+            raise RuntimeError("Pleovisors already set!")
+        self._pleovisors = value
 
     @property
     def scheduler(self) -> Scheduler:
@@ -644,7 +644,7 @@ class CoreSysAttributes:
     @property
     def sys_pleovisors(self) -> PleovisorsAPI:
         """Return PleovisorAPI object."""
-        return self.coresys.pleovisor
+        return self.coresys.pleovisors
 
     @property
     def sys_scheduler(self) -> Scheduler:

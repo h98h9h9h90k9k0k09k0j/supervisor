@@ -89,7 +89,7 @@ class AddonManager(CoreSysAttributes):
             tasks.append(addon.load())
 
         # Load Pleovisors
-        await self.coresys.pleovisor.load()
+        await self.coresys.pleovisors.load()
 
         # Run initial tasks
         _LOGGER.info("Found %d installed add-ons", len(self.data.system))

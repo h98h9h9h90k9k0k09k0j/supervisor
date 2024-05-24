@@ -59,7 +59,7 @@ async def initialize_coresys() -> CoreSys:
 
     # Initialize core objects
     coresys.docker = DockerAPI(coresys)
-    coresys.pleovisor = PleovisorsAPI(coresys)
+    coresys.pleovisors = PleovisorsAPI(coresys)
     coresys.resolution = ResolutionManager(coresys)
     coresys.jobs = JobManager(coresys)
     coresys.core = Core(coresys)
