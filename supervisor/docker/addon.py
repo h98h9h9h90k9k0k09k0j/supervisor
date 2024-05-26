@@ -333,6 +333,19 @@ class DockerAddon(DockerInterface):
         if MappingType.DATA in addon_mapping:
             target_data_path = addon_mapping[MappingType.DATA].path
 
+        if self.addon.on_pleovisor:
+            return [
+                Mount(
+                    type=MountType.VOLUME, source="dev", target="/dev", read_only=True
+                ),
+                Mount(
+                    type=MountType.VOLUME,
+                    source=self.addon.slug + "-data",  # volume name not host path
+                    target=target_data_path or "/data",
+                    read_only=False,
+                ),
+            ]
+
         mounts = [
             MOUNT_DEV,
             Mount(

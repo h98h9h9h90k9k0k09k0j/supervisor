@@ -135,6 +135,7 @@ class Addon(AddonModel):
         """Initialize data holder."""
         super().__init__(coresys, slug)
         self.instance: DockerAddon = DockerAddon(coresys, self)
+        self.on_pleovisor = False
         self._state: AddonState = AddonState.UNKNOWN
         self._manual_stop: bool = (
             self.sys_hardware.helper.last_boot != self.sys_config.last_boot
@@ -165,7 +166,9 @@ class Addon(AddonModel):
 
         if docker is None:
             docker = self.sys_docker
-        _LOGGER.log("hello %s", docker)
+            self.on_pleovisor = False
+        else:
+            self.on_pleovisor = True
 
         self.instance = DockerAddon(self.coresys, self, docker)
         await self.install()

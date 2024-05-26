@@ -29,7 +29,6 @@ class PleovisorsAPI(CoreSysAttributes, FileConfiguration):
 
     async def load(self):
         """Load PleovisorsAPI."""
-        _LOGGER.log(logging.ERROR, self._data[ATTR_PLEOVISORS])
         for url in self._data[ATTR_PLEOVISORS]:
             self._instances[url] = Pleovisor(
                 self.coresys, url, self._data[ATTR_PLEOVISORS][url]
