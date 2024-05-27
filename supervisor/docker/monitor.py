@@ -28,12 +28,13 @@ class DockerContainerStateEvent:
 class DockerMonitor(CoreSysAttributes, Thread):
     """Docker monitor for supervisor."""
 
-    def __init__(self, coresys: CoreSys):
+    def __init__(self, coresys: CoreSys, docker):
         """Initialize Docker monitor object."""
         super().__init__()
         self.coresys = coresys
         self._events: CancellableStream | None = None
         self._unlabeled_managed_containers: list[str] = []
+        self._docker = docker
 
     def watch_container(self, container: Container):
         """If container is missing the managed label, add name to list."""
@@ -42,7 +43,7 @@ class DockerMonitor(CoreSysAttributes, Thread):
 
     async def load(self):
         """Start docker events monitor."""
-        self._events = self.sys_docker.events
+        self._events = self._docker.events
         Thread.start(self)
         _LOGGER.info("Started docker events monitor")
 

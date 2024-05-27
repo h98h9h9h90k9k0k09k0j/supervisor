@@ -1,4 +1,5 @@
 """Manager for Supervisor Docker."""
+
 from contextlib import suppress
 from ipaddress import IPv4Address
 import logging
@@ -102,15 +103,16 @@ class DockerAPI:
     This class is not AsyncIO safe!
     """
 
-    def __init__(self, coresys: CoreSys):
+    def __init__(self, coresys: CoreSys, url: str = f"unix:/{str(SOCKET_DOCKER)}"):
         """Initialize Docker base wrapper."""
         self.docker: DockerClient = DockerClient(
-            base_url=f"unix:/{str(SOCKET_DOCKER)}", version="auto", timeout=900
+            base_url=url, version="auto", timeout=900
         )
+        self.url = url
         self.network: DockerNetwork = DockerNetwork(self.docker)
         self._info: DockerInfo = DockerInfo.new(self.docker.info())
         self.config: DockerConfig = DockerConfig()
-        self._monitor: DockerMonitor = DockerMonitor(coresys)
+        self._monitor: DockerMonitor = DockerMonitor(coresys, self)
 
     @property
     def images(self) -> ImageCollection:

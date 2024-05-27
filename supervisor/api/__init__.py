@@ -1,4 +1,5 @@
 """Init file for Supervisor RESTful API."""
+
 from functools import partial
 import logging
 from pathlib import Path
@@ -6,6 +7,8 @@ from typing import Any
 
 from aiohttp import web
 from aiohttp_fast_url_dispatcher import FastUrlDispatcher, attach_fast_url_dispatcher
+
+from supervisor.api.pleovisors import APIPleovisors
 
 from ..const import AddonState
 from ..coresys import CoreSys, CoreSysAttributes
@@ -106,6 +109,7 @@ class RestAPI(CoreSysAttributes):
         self._register_security()
         self._register_services()
         self._register_store()
+        self._register_pleovisors()
         self._register_supervisor()
 
         await self.start()
@@ -746,6 +750,21 @@ class RestAPI(CoreSysAttributes):
                     "/addons/{addon}/documentation",
                     api_store.addons_addon_documentation,
                 ),
+            ]
+        )
+
+    def _register_pleovisors(self) -> None:
+        """Register pleovisor endpoints."""
+        api_pleovisor = APIPleovisors()
+        api_pleovisor.coresys = self.coresys
+
+        self.webapp.add_routes(
+            [
+                web.get("/pleovisors", api_pleovisor.pleovisor_list),
+                web.get("/pleovisors/{pleovisor}", api_pleovisor.pleovisor_info),
+                web.post("/pleovisors", api_pleovisor.add_pleovisor),
+                web.delete("/pleovisors/{pleovisor}", api_pleovisor.remove_pleovisor),
+                web.post("/pleovisors/{pleovisor}/{addon}", api_pleovisor.add_addon),
             ]
         )
 

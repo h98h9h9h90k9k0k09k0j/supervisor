@@ -1,4 +1,5 @@
 """Bootstrap Supervisor."""
+
 import logging
 import os
 from pathlib import Path
@@ -38,6 +39,7 @@ from .misc.scheduler import Scheduler
 from .misc.tasks import Tasks
 from .mounts.manager import MountManager
 from .os.manager import OSManager
+from .pleovisors import PleovisorsAPI
 from .plugins.manager import PluginManager
 from .resolution.module import ResolutionManager
 from .security.module import Security
@@ -57,6 +59,7 @@ async def initialize_coresys() -> CoreSys:
 
     # Initialize core objects
     coresys.docker = DockerAPI(coresys)
+    coresys.pleovisors = PleovisorsAPI(coresys)
     coresys.resolution = ResolutionManager(coresys)
     coresys.jobs = JobManager(coresys)
     coresys.core = Core(coresys)
